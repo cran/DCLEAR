@@ -1,0 +1,237 @@
+---
+title: "How to use weighted hamming on sequence data for cell lineage reconstruction?"
+date: "`r Sys.Date()`"
+author: "Il-Youp Kwak and Wuming Gong"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DCLEAR : Distance based Cell LinEAge Reconstruction-weighted hamming}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r knitr_options, echo=FALSE, results=FALSE}
+library(knitr)
+opts_chunk$set(fig.width = 12)
+```
+
+
+## What is Cell Lineage Reconstruction?
+
+The research question is that "Can we reconstruct the lineage of how cells differentiate?". [McKenna et al Science (2016)](https://science.sciencemag.org/content/353/6298/aaf7907) shows the possibility that lineage can be reconstructed through the edited barcode of CRISPR/Cas9 target sites. Scientists can reconstruct the cell lineange based on the information from barcodes of each cell.
+
+The next question is how accurately can we recover the cell lineage? The [Allen Institute Cell Lineage Reconstruction DREAM Challenge](https://www.synapse.org/#!Synapse:syn20692755/wiki/595096) is hosted to answer the question and search for useful approaches.
+
+## Who We are?
+
+We are Il-Youp Kwak and Wuming Going who participated this competition as a team (Kwak_Gong). We would like to share our methods and experience. Hope our findings helpful to everyone! :)
+
+```{r loading, include=FALSE}
+library(DCLEAR)
+library(phangorn)
+library(tidyverse)
+library(ape)
+
+```
+
+## The Simulation data
+
+We tried to generate the sequence data, the way [Salvador-Martinez and Grillo et al. (2019)](https://elifesciences.org/articles/40292) described in 'General description of the simulation' from Result section. Basically, it simulate binary structure of cell lineage. For a simple example, given the tree structure of 7 cells below,
+
+```
+    1
+  2   3
+ 4 5 6 7
+```
+The barcode of cells generated as
+
+```
+1: '0000000000'
+2: 'E00A000000'
+3: '0000C00000'
+4: 'EA0A000E00'
+5: 'E00A000000'
+6: 'E0A0CD0000'
+7: '0000C---00'
+```
+Here, '0' stands for the initial state, '-' stands for interval dropout, and character letter stands for mutational outcomes.
+
+
+Here is a code to generate simulation data.
+
+
+```{r simulate1}
+m = 30  # number of targets
+acell = as.integer(rep(1,m)) ## mother cell with an unmutated state
+mu_d = 0.1  ## mutation rate (ex 0.01 to 0.3)
+d = 3  ## number of cell division
+n_s = 5 ##  the number of possible mutational outcomes (1:n_s)
+p_d = 0.05 ## dropout probability
+
+nmstrings = c( '0', '-', LETTERS[1:n_s] ) 
+sim_tree = list()
+sim_tree[[1]] = acell
+
+k = 2
+while(k < 2^d) {
+    ## codes for point mutation
+    mother_cell = sim_tree[[k%/%2]]
+    mu_loc = runif(m) < mu_d
+    mutation_cites = (mother_cell == 1) &  mu_loc
+    n_mut = sum(mutation_cites)
+    if (n_mut > 0) {
+        mother_cell[mutation_cites] = as.integer(sample(n_s, n_mut, replace = T)+2)
+    }
+    
+    ## codes for dropout
+    dropout_cites = runif(m) < p_d
+    if (sum(dropout_cites) > 2 ) {
+        dropout_between = sample(which(dropout_cites), 2 )
+        mother_cell[dropout_between[1]:dropout_between[2]] = as.integer(2)
+    }
+    
+    sim_tree[[k]] = mother_cell
+    k = k+1
+}
+```
+
+Simulated cells are shown below:
+```{r simulate2}
+1:7 %>% map(~paste(nmstrings[sim_tree[[.]]], collapse=""))
+```
+
+
+By extending the code, we made our code `sim_seqdata` for simulating data. 
+
+```{r parameters}
+set.seed(1)
+mu_d1 = c( 30, 20, 10, 5, 5, 1, 0.01, 0.001)
+mu_d1 = mu_d1/sum(mu_d1)
+simn = 100 # number of cell samples
+m = 200  ## number of targets
+mu_d = 0.03 # mutation rate
+d = 12 # number of cell division
+p_d = 0.005 # dropout probability
+```
+
+To generate `r simn` number of cells with `r m` number of targets, `r mu_d` mutation rate, `r d` number of cell divisions, `r p_d` dropout probability, and `r length(mu_d1)` number of outcome states with outcome probability of `r mu_d1`, we can run the code below.
+
+```{r simulatedata}
+sD = sim_seqdata(sim_n = simn, m = m, mu_d = mu_d, d = d, n_s = length(mu_d1), outcome_prob = mu_d1, p_d = p_d )
+```
+
+The result of sim_seqdata function, sD, is a list of two object, 'seqs' and 'tree'. 
+
+'seqs' is a sequence data of 'phyDat' object, 
+```{r simulatedata_seq}
+sD$seqs
+```
+
+and 'tree' is ground truth tree structure of 'phylo' object.
+```{r simulatedata_tree}
+class(sD$tree)
+```
+
+## Distance estimation using hamming 
+One easy way to construct a tree is to calculate distance among cells and construct a tree from the distance matrix. One of widely used method for the sequence distance is hamming distance.
+```{r hamming}
+distH = dist.hamming(sD$seqs)
+```
+
+With Neighbor Joining or fastme by [Desper, R. and Gascuel, O. (2002)](https://pubmed.ncbi.nlm.nih.gov/12487758/), we can construct tree from the distance matrix.
+
+```{r treeconst}
+TreeNJ = NJ(distH)
+TreeFM = fastme.ols(distH)
+```
+
+We calculate Robinson-Foulds distance, one of evaluation metric used in the competition, to evaluate performance. 
+```{r eval}
+print( RF.dist(TreeNJ, sD$tree, normalize = TRUE) )
+print( RF.dist(TreeFM, sD$tree, normalize = TRUE) )
+```
+
+## Ideas
+
+### Weighted Hamming Distance I
+
+Hamming distance simply count the number of different characters given two sequences. Say we have two sequences '00AB0' and '0-CB0'. Hamming distance is simply 2.
+
+The second position, we have '0' and '-', and the third position, we have 'A' and 'C'.
+Would it be reasonable to put equal weights for these two differences?
+If not, what difference would be farther?
+
+To account for this consideration, we proposed weights for '0' (initial state), '-' (interval dropout), ''(point dropout) and each outcome state (A-Z). Say $w_1$ is weight for '0', $w_2$ is for '-', $w_3$ is for '', and $w_a, \cdots, w_z$ are for outcome states A to Z.
+
+So, for the given example, '00AB0' and '0-CB0', weighted hamming distance is $w_1 w_2 + w_a w_c$ .
+
+### Initcial choice of weights.
+
+#### Information entropy weights for $w_a, \cdots, w_z$
+
+We can estimate mutation probability for each outcome state from the data by their frequencies. Less frequent outcomes are less likely to observe. Less likely outcomes would corresponds with farther distances. Thus one idea for outcome states is with their information entropy. $w_a = -log P(\text{base is A}), \cdots, w_z = -log P(\text{base is Z})$.
+
+
+#### Constant weights for $w_a, \cdots, w_z$
+
+Or, we may assign simple constant weight for $w_a, \cdots, w_z$. 
+
+#### Weights for $w_1, w_2,$ and $w_3$
+
+We set weight for initial state, $w_1$, as 1. 
+We can search for weights $w_2$ and $w_3$ that minimize averaged RF score on train set with simple grid search. 
+
+
+### Weighted Hamming Distance II that considering interval dropout
+The proposed weighted hamming didn't account for interval dropout. It maybe better to consider interval dropout event in distance calculation. Previously, we assigned weights to each target site. Our extended idea is to assign weight on dropout interval. Say we have two sequences '00AB0' and '00- - -'. The Hamming distance score would be 3, and the weighted hamming score would be $w_a w_2 + w_b w_2 + w_1 w_2$. However, this interval dropout maybe one event of interval missing. So, with the new algorithm, weighted hamming distance II is just $w_2^*$.  
+
+
+### Example code for Weighted Hamming I
+
+Here's how we specify weights.
+
+```{r initial_wh1}
+InfoW = -log(mu_d1)  ## entropy as their weights
+InfoW[1:2] = 1   ## weight for initial state is 1 , weight for '-' is set to 1. 
+InfoW[3:7] = 4.5 ## Constant weight for outcome states
+dist_wh1 = WH(sD$seqs, InfoW)
+#dist_wh1 = dist_weighted_hamming(sD$seqs, InfoW, dropout = FALSE)
+
+```
+
+We can construct tree using NJ or fastme.
+```{r treeconst_wh1}
+TreeNJ_wh1 = NJ(dist_wh1)
+TreeFM_wh1 = fastme.ols(dist_wh1)
+```
+
+RF performance is as below.
+```{r eval_wh1}
+print( RF.dist(TreeNJ_wh1, sD$tree, normalize = TRUE) )
+print( RF.dist(TreeFM_wh1, sD$tree, normalize = TRUE) )
+```
+
+### Example code for Weighted Hamming II
+
+Here's how we specify weights.
+
+```{r initial_wh2}
+InfoW = -log(mu_d1)  ## entropy as their weights
+InfoW[1] = 1  # weight for initial state is 1
+InfoW[2] = 12  # weight for interval dropout, '----', is set to 12. 
+InfoW[3:7] = 3 # Constant weight for outcome states
+dist_wh2 = WH(sD$seqs, InfoW, dropout=TRUE)
+```
+
+We can construct tree using NJ or fastme.
+```{r treeconst_wh2}
+TreeNJ_wh2 = NJ(dist_wh2)
+TreeFM_wh2 = fastme.ols(dist_wh2)
+```
+
+RF performance is as below.
+```{r eval_wh2}
+print( RF.dist(TreeNJ_wh2, sD$tree, normalize = TRUE) )
+print( RF.dist(TreeFM_wh2, sD$tree, normalize = TRUE) )
+```
+
+

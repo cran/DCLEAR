@@ -1,0 +1,77 @@
+---
+title: "How we generated our prediction for subchallenge 3"
+date: "`r Sys.Date()`"
+author: "Il-Youp Kwak and Wuming Gong"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{prediction for subchallenge 3}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r knitr_options, echo=FALSE, results=FALSE}
+library(knitr)
+opts_chunk$set(fig.width = 12)
+```
+
+```{r loading, include=FALSE}
+library(DCLEAR)
+library(phangorn)
+#library(parallel)
+
+```
+
+This vignettes illustrate how our team prepared a submission for subchallenge 3. 
+
+## Data processing
+
+
+The 'csv_file' is a file path of evaluation for subchallenge 3 given from the competition.
+Change the like with the one you would like to predict.
+
+```
+csv_file <- 'Data/subC3/SubC3_10K_0001_mutation_table.csv'
+\dontrun{x <- read.table(csv_file, header = T, sep = ',', colClasses = "character")}
+```
+
+Initical state is '0', interval dropout is '-', point dropout is '*' (point dropout was '' from the file, but we will replace it with '*'), and mutational outcome states are 'A' to 'Z'. 
+
+```
+\dontrun{states <- c('0', '-', '*', LETTERS)}
+```
+
+Read file and save it as 'phyDat' object.
+```
+\dontrun{tip_names <- x[, 1]}
+\dontrun{x <- x[,-1]}
+\dontrun{rownames(x) <- tip_names}
+\dontrun{x[ x == '' ] = '*'  ## specified * as point dropout (point missing)} 
+\dontrun{x = as.matrix(x)}
+\dontrun{x <- x %>% phyDat(type = 'USER', levels = states)}
+
+\dontrun{states2num = 1:length(states)}
+\dontrun{names(states2num) = states}
+```
+
+## Weight parameters for the prediction
+
+We tried weighted hamming I and II with large number of parameter combinations, and found weighted hamming I with weight below worked fairly well. 
+
+```
+InfoW = 1:5
+InfoW[1] = 1  ## Score 
+InfoW[2] = .9
+InfoW[3] = .4
+InfoW[4:26] = 3
+```
+
+## Generating final submission file for subchallenge 3
+
+```
+\dontrun{aTree2 <- x %>% dist_weighted_hamming(InfoW, FALSE) %>% fastme.ols()}
+\dontrun{write.tree(aTree2, "Kwak_Gongsub3_submission.nw")}
+
+```
+
+Thanks!
+
