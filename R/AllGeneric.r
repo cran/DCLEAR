@@ -27,9 +27,10 @@ setGeneric('summarize_kmer', function(x, ...) standardGeneric('summarize_kmer'))
 
 #' Generic function for simulate
 #' @param config a lineage_tree_config object
+#' @param x a sequence object
 #' @param ... additional parameters
 #'
-setGeneric('simulate', function(config, ...) standardGeneric('simulate'))
+setGeneric('simulate', function(config, x, ...) standardGeneric('simulate'))
 
 #' Generic function for process_sequence
 #' @param x a sequence object
@@ -42,3 +43,49 @@ setGeneric('process_sequence', function(x, ...) standardGeneric('process_sequenc
 #' @param ... additional parameters
 #'
 setGeneric('as_phylo', function(x, ...) standardGeneric('as_phylo'))
+
+#' Generic function for as_igraph
+#' @param x a phylo object
+#' @param ... additional parameters
+#'
+setGeneric('as_igraph', function(x, ...) standardGeneric('as_igraph'))
+
+#' Generic function for downsample 
+#' @param x a data object
+#' @param ... additional parameters
+#'
+setGeneric('downsample', function(x, ...) standardGeneric('downsample'))
+
+#' Generic function for subtree
+#' @param x a lineage_tree object
+#' @param ... additional parameters
+#'
+setGeneric('subtree', function(x, ...) standardGeneric('subtree'))
+
+#' Generic function for subtract
+#' @param x a lineage_tree object
+#' @param y a lineage_tree object
+#' @param ... additional parameters
+#'
+setGeneric('subtract', function(x, y, ...) standardGeneric('subtract'))
+
+#' Generic function for get_leaves
+#' @param x a lineage_tree object
+#' @param ... additional parameters
+#'
+setGeneric('get_leaves', function(x, ...) standardGeneric('get_leaves'))
+
+#' Generic function for prune
+#' @param x a lineage_tree object
+#' @param ... additional parameters
+#'
+setGeneric('prune', function(x, ...) standardGeneric('prune'))
+
+#' Generic function for as_lineage_tree
+#' @param x a phyDat object
+#' @param y a phylo object
+#' @param config a lineage_tree_config object
+#' @param ... additional parameters
+#'
+setGeneric('as_lineage_tree', function(x, y, config, ...) standardGeneric('as_lineage_tree'))
+

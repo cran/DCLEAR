@@ -10,7 +10,7 @@
 \item{x}{an igraph object}
 }
 \value{
-a phylo object
+a phylo object or a igraph object
 }
 \description{
 Convert an igraph object to a phylo object

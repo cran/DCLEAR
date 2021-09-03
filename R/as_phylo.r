@@ -2,7 +2,7 @@
 #' 
 #' Convert an igraph object to a phylo object
 #' @param x an igraph object
-#' @return a phylo object
+#' @return a phylo object or a igraph object
 #' 
 #' @export
 #'
@@ -13,41 +13,29 @@ setMethod(
 	),
 	function(x){
 
-		y <- list()	# a phylo object
-
-		# reverse the vertic order so that the leaves have the smallest index
-		x <- permute.vertices(x, vcount(x):1)	
+		# check if this is a phylogenetic tree
 
 		is_leaf <- degree(x, mode = 'out') == 0
-		is_branch <- degree(x, mode = 'out') == 2
-		is_link <- degree(x, mode = 'out') == 1
-		d <- distances(x, v = V(x)[is_link], to = V(x)[is_leaf | is_branch], mode = 'out')
-
-		d_lb <- distances(x, v = V(x)[is_leaf | is_branch], to = V(x)[is_leaf | is_branch])
-
-		n_nodes <- sum(is_leaf | is_branch)
-		new2old <- which(is_leaf | is_branch)	# map from new vertex index to old vertex index
-		name2id <- 1:n_nodes
-		names(name2id) <- names(new2old)
-
-		old2new <- rep(NA, vcount(x))
-		names(old2new) <- V(x)$name
-		old2new[is_leaf] <- name2id[names(which(is_leaf))]
-		old2new[is_branch] <- name2id[names(which(is_branch))]
-		old2new[is_link] <- name2id[names(new2old[apply(d, 1, which.min)])]
-		x <- contract(x, old2new)
-		x <- simplify(x)
-			is_leaf <- degree(x, mode = 'out') == 0
-		x <- x %>% set_vertex_attr('name', index = 1:vcount(x), value = names(name2id))
+		n_leaves <- sum(is_leaf)
+		v <- topo_sort(x, mode = 'in')$name %>% 
+			rev() %>%
+			unlist() 
+		v <- c(v[(vcount(x) - n_leaves + 1):vcount(x)], v[1:(vcount(x) - n_leaves)])
+		v0 <- V(x)$name %>% as.character()
+		x <- permute.vertices(x, factor(v0, v) %>% as.numeric())
+		is_leaf <- degree(x, mode = 'out') == 0
+		d <- distances(x)
+		y <- list()
 		y$edge <- (x[] %>% summary())[, 1:2] %>% as.matrix()
-		y$tip.label <- names(name2id)[is_leaf]
-		y$Nnode <- vcount(x)
-		y$edge.length <- d_lb[y$edge]
-
-		attr(y, 'class') = 'phylo'
-		tmpfn <- tempfile(fileext = '.nw')
-		write.tree(y, tmpfn)
-		read.tree(tmpfn)
+		dimnames(y$edge) <- NULL
+		y$edge.length <- d[y$edge]
+		y$Nnode <- sum(!is_leaf)
+		y$tip.label <- V(x)$name[is_leaf] %>% as.character()
+		attr(y, 'class') <- 'phylo'
+		attr(y, "order") <- 'cladewise'
+		y
 	}
 
 ) # as_phylo
+
+

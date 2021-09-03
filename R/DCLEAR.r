@@ -7,7 +7,7 @@
 #' @import Matrix
 #' @import dplyr
 #' @importFrom matrixStats rowLogSumExps
-#' @importFrom igraph distances graph.adjacency degree permute.vertices vcount V contract simplify set_vertex_attr
+#' @importFrom igraph distances graph.adjacency degree permute.vertices vcount V V<- E E<- contract simplify set_vertex_attr graph_from_edgelist induced_subgraph topo_sort
 #' @importFrom purrr map
 #' @importFrom stringr str_pad
 #' @importFrom BiocParallel bplapply
@@ -18,6 +18,7 @@
 #' @importFrom tidyr replace_na
 #' @importFrom rlang .data
 #' @importFrom rBayesianOptimization BayesianOptimization
+#' @importFrom BiocGenerics rbind
 #' @useDynLib DCLEAR
 #' @docType package
 #' @name DCLEAR
