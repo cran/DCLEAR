@@ -101,7 +101,8 @@ dist_kmer_replacement_inference <- function(x, kmer_summary, k = 2){
 		filter(.data$from < .data$to)
 
   # input sequence 
-	y <- do.call('rbind', strsplit(as.character(x), '')) %>%
+	y <- x %>% 
+		as.character() %>% 
 		factor(kmer_summary@alphabets) %>% 
 		as.integer() %>%
 		matrix(length(x), sequence_length)
@@ -203,40 +204,31 @@ get_distance_prior <- function(x){
 #'
 get_transition_probability <- function(x){
 
-  # conditional transition probability
-  d <- x@df %>%
-    ungroup() %>%
-    mutate(
-      from2 = paste0(substr(.data$from, 1, 1), substr(.data$to, 1, 1)),
-      to2 = paste0(substr(.data$from, 2, 2), substr(.data$to, 2, 2))
-    ) %>%
-    mutate(from = .data$from2, to = .data$to2) %>%
-    select(.data$from, .data$to, .data$distance, .data$n) %>%
-    right_join(
-      expand.grid(
-        from = x@kmers, 
-        to = x@kmers, 
-        distance = 1:x@max_distance, 
-        stringsAsFactors = FALSE
-      ),
-      by = c('from', 'to', 'distance')
-    ) %>%
-    replace_na(list(n = 0))  %>%
-    mutate(n = ifelse(.data$from == .data$to, n + 1, n)) %>%
-    group_by(.data$distance, .data$from) %>%
-    mutate(prob = n / sum(n)) %>%
-    select(.data$from, .data$to, .data$distance, .data$prob) %>%
-		mutate(
-			from = factor(.data$from, x@kmers),
-			to = factor(.data$to, x@kmers)
-		) %>%
-		arrange(.data$distance, .data$to, .data$from)
+	from2 <- do.call('rbind', strsplit(x@df$from, ' '))
+	to2 <- do.call('rbind', strsplit(x@df$to, ' '))
 
-  array(
-    d$prob, 
-    dim = c(length(x@kmers), length(x@kmers), x@max_distance),
-    dimnames = list(x@kmers, x@kmers, NULL)
-  )
+	from <- paste(from2[, 1], to2[, 1])
+	to <- paste(from2[, 2], to2[, 2])
+
+	d <- tf$sparse$SparseTensor(
+	  cbind(
+	    factor(from, x@kmers) %>% as.numeric() - 1L,
+	    factor(to, x@kmers) %>% as.numeric() - 1L,
+	    x@df$distance - 1L
+	  ),
+	  tf$cast(x@df$n, tf$float32),
+	  shape(length(x@kmers), length(x@kmers), x@max_distance)
+	) %>%
+	  tf$sparse$reorder() %>%
+	  tf$sparse$to_dense()
+	
+	dg <- tf$linalg$diag(rep(1, length(x@kmers))) %>%
+	  tf$expand_dims(2L)
+	d <- d + dg
+	d <- d / d %>% tf$reduce_sum(shape(1L), keepdims = TRUE)
+	d <- as.array(d)
+	dimnames(d) <- list(x@kmers, x@kmers, NULL)
+	d
 
 } # get_transition_probability
 
@@ -256,32 +248,25 @@ get_transition_probability <- function(x){
 #'
 get_replacement_probability <- function(x){
 
-  d <- x@df %>% 
-    right_join(
-      expand.grid(
-        from = x@kmers,
-        to = x@kmers, 
-        distance = 1:x@max_distance, 
-        stringsAsFactors = FALSE
-      ),
-      by = c('from', 'to', 'distance')
-    ) %>%
-    replace_na(list(n = 0))  %>%
-    mutate(n = ifelse(.data$from == .data$to, n + 1, n)) %>%
-    group_by(.data$distance) %>%
-    mutate(prob = n / sum(n)) %>%
-    select(.data$from, .data$to, .data$distance, .data$prob) %>%
-		mutate(
-			from = factor(.data$from, x@kmers),
-			to = factor(.data$to, x@kmers)
-		) %>%
-		arrange(.data$distance, .data$to, .data$from)
-
-  array(
-    d$prob, 
-    dim = c(length(x@kmers), length(x@kmers), x@max_distance),
-    dimnames = list(x@kmers, x@kmers, NULL)
-  )
+	d <- tf$sparse$SparseTensor(
+	  cbind(
+	    factor(x@df$from, x@kmers) %>% as.numeric() - 1L,
+	    factor(x@df$to, x@kmers) %>% as.numeric() - 1L,
+	    x@df$distance - 1L
+	  ),
+	  tf$cast(x@df$n, tf$float32),
+	  shape(length(x@kmers), length(x@kmers), x@max_distance)
+	) %>%
+	  tf$sparse$reorder() %>%
+	  tf$sparse$to_dense()
+	
+	dg <- tf$linalg$diag(rep(1, length(x@kmers))) %>%
+	  tf$expand_dims(2L)
+	d <- d + dg
+	d <- d / d %>% tf$reduce_sum(shape(0L, 1L), keepdims = TRUE)
+	d <- as.array(d)
+	dimnames(d) <- list(x@kmers, x@kmers, NULL)
+	d
 
 } # get_replacement_probability
 

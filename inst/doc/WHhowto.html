@@ -12,7 +12,7 @@
 
 <meta name="author" content="Il-Youp Kwak and Wuming Gong" />
 
-<meta name="date" content="2021-09-03" />
+<meta name="date" content="2022-11-30" />
 
 <title>How to use weighted hamming on sequence data for cell lineage reconstruction?</title>
 
@@ -112,13 +112,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">How to use weighted hamming on sequence data for cell lineage reconstruction?</h1>
 <h4 class="author">Il-Youp Kwak and Wuming Gong</h4>
-<h4 class="date">2021-09-03</h4>
+<h4 class="date">2022-11-30</h4>
 
 
 
 <div id="what-is-cell-lineage-reconstruction" class="section level2">
 <h2>What is Cell Lineage Reconstruction?</h2>
-<p>The research question is that &quot;Can we reconstruct the lineage of how cells differentiate?&quot;. <a href="https://www.sciencemag.org/doi/10.1126/science.aaf7907">McKenna et al Science (2016)</a> shows the possibility that lineage can be reconstructed through the edited barcode of CRISPR/Cas9 target sites. Scientists can reconstruct the cell lineange based on the information from barcodes of each cell.</p>
+<p>The research question is that &quot;Can we reconstruct the lineage of how cells differentiate?&quot;. <a href="https://www.science.org/doi/10.1126/science.aaf7907">McKenna et al Science (2016)</a> shows the possibility that lineage can be reconstructed through the edited barcode of CRISPR/Cas9 target sites. Scientists can reconstruct the cell lineange based on the information from barcodes of each cell.</p>
 <p>The next question is how accurately can we recover the cell lineage? The <a href="https://www.synapse.org/#!Synapse:syn20692755/wiki/595096">Allen Institute Cell Lineage Reconstruction DREAM Challenge</a> is hosted to answer the question and search for useful approaches.</p>
 </div>
 <div id="who-we-are" class="section level2">
@@ -179,22 +179,22 @@ while(k &lt;<span class="st"> </span><span class="dv">2</span>^d) {
 ## [1] &quot;000000000000000000000000000000&quot;
 ## 
 ## [[2]]
-## [1] &quot;0000000000000C000000D00000D000&quot;
+## [1] &quot;00000D00000000000A00000000D0C0&quot;
 ## 
 ## [[3]]
-## [1] &quot;00000D000000000000000000000000&quot;
+## [1] &quot;00B0000E0CA0000000000D000000C0&quot;
 ## 
 ## [[4]]
-## [1] &quot;00000000A0000C000000D00000D000&quot;
+## [1] &quot;00000D0000-----C0A00000000D0C0&quot;
 ## 
 ## [[5]]
-## [1] &quot;A0000C0D00000C0C0000D00000D000&quot;
+## [1] &quot;000D0D00000000000A00000000D0C0&quot;
 ## 
 ## [[6]]
-## [1] &quot;000----------000000000A000E000&quot;
+## [1] &quot;00BD000E0CA000000000BD000000C0&quot;
 ## 
 ## [[7]]
-## [1] &quot;00000D00000000D0000000C00E0000&quot;</code></pre>
+## [1] &quot;00BCC00E0CA0000000000D000000C0&quot;</code></pre>
 <p>By extending the code, we made our code <code>sim_seqdata</code> for simulating data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1</span>)
 mu_d1 =<span class="st"> </span><span class="kw">c</span>( <span class="dv">30</span>, <span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span>)
