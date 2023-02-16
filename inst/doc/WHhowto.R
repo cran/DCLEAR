@@ -5,7 +5,8 @@ opts_chunk$set(fig.width = 12)
 ## ----loading, include=FALSE---------------------------------------------------
 library(DCLEAR)
 library(phangorn)
-library(tidyverse)
+library(dplyr)
+library(purrr)
 library(ape)
 
 

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Il-Youp Kwak and Wuming Gong" />
 
-<meta name="date" content="2022-11-30" />
+<meta name="date" content="2023-02-16" />
 
 <title>How to use weighted hamming on sequence data for cell lineage reconstruction?</title>
 
@@ -112,7 +112,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">How to use weighted hamming on sequence data for cell lineage reconstruction?</h1>
 <h4 class="author">Il-Youp Kwak and Wuming Gong</h4>
-<h4 class="date">2022-11-30</h4>
+<h4 class="date">2023-02-16</h4>
 
 
 
@@ -179,22 +179,22 @@ while(k &lt;<span class="st"> </span><span class="dv">2</span>^d) {
 ## [1] &quot;000000000000000000000000000000&quot;
 ## 
 ## [[2]]
-## [1] &quot;00000D00000000000A00000000D0C0&quot;
+## [1] &quot;0000A000000000000000000AD00000&quot;
 ## 
 ## [[3]]
-## [1] &quot;00B0000E0CA0000000000D000000C0&quot;
+## [1] &quot;00000000000000000000000E0000C0&quot;
 ## 
 ## [[4]]
-## [1] &quot;00000D0000-----C0A00000000D0C0&quot;
+## [1] &quot;0DA0A000000000000D0000DAD0000A&quot;
 ## 
 ## [[5]]
-## [1] &quot;000D0D00000000000A00000000D0C0&quot;
+## [1] &quot;000BA000000000000000000AD00000&quot;
 ## 
 ## [[6]]
-## [1] &quot;00BD000E0CA000000000BD000000C0&quot;
+## [1] &quot;000B000D000000000000000E0000C0&quot;
 ## 
 ## [[7]]
-## [1] &quot;00BCC00E0CA0000000000D000000C0&quot;</code></pre>
+## [1] &quot;000------------00000000E000BC0&quot;</code></pre>
 <p>By extending the code, we made our code <code>sim_seqdata</code> for simulating data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1</span>)
 mu_d1 =<span class="st"> </span><span class="kw">c</span>( <span class="dv">30</span>, <span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span>)
