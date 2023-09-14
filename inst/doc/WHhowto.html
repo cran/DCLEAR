@@ -12,7 +12,7 @@
 
 <meta name="author" content="Il-Youp Kwak and Wuming Gong" />
 
-<meta name="date" content="2023-02-16" />
+<meta name="date" content="2023-09-14" />
 
 <title>How to use weighted hamming on sequence data for cell lineage reconstruction?</title>
 
@@ -25,6 +25,7 @@
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -80,13 +81,20 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -112,7 +120,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">How to use weighted hamming on sequence data for cell lineage reconstruction?</h1>
 <h4 class="author">Il-Youp Kwak and Wuming Gong</h4>
-<h4 class="date">2023-02-16</h4>
+<h4 class="date">2023-09-14</h4>
 
 
 
@@ -148,57 +156,57 @@ d =<span class="st"> </span><span class="dv">3</span>  ## number of cell divisio
 n_s =<span class="st"> </span><span class="dv">5</span> ##  the number of possible mutational outcomes (1:n_s)
 p_d =<span class="st"> </span><span class="fl">0.05</span> ## dropout probability
 
-nmstrings =<span class="st"> </span><span class="kw">c</span>( <span class="st">'0'</span>, <span class="st">'-'</span>, LETTERS[<span class="dv">1</span>:n_s] ) 
+nmstrings =<span class="st"> </span><span class="kw">c</span>( <span class="st">'0'</span>, <span class="st">'-'</span>, LETTERS[<span class="dv">1</span><span class="op">:</span>n_s] ) 
 sim_tree =<span class="st"> </span><span class="kw">list</span>()
 sim_tree[[<span class="dv">1</span>]] =<span class="st"> </span>acell
 
 k =<span class="st"> </span><span class="dv">2</span>
-while(k &lt;<span class="st"> </span><span class="dv">2</span>^d) {
+<span class="cf">while</span>(k <span class="op">&lt;</span><span class="st"> </span><span class="dv">2</span><span class="op">^</span>d) {
     ## codes for point mutation
-    mother_cell =<span class="st"> </span>sim_tree[[k%/%<span class="dv">2</span>]]
-    mu_loc =<span class="st"> </span><span class="kw">runif</span>(m) &lt;<span class="st"> </span>mu_d
-    mutation_cites =<span class="st"> </span>(mother_cell ==<span class="st"> </span><span class="dv">1</span>) &amp;<span class="st">  </span>mu_loc
+    mother_cell =<span class="st"> </span>sim_tree[[k<span class="op">%/%</span><span class="dv">2</span>]]
+    mu_loc =<span class="st"> </span><span class="kw">runif</span>(m) <span class="op">&lt;</span><span class="st"> </span>mu_d
+    mutation_cites =<span class="st"> </span>(mother_cell <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">&amp;</span><span class="st">  </span>mu_loc
     n_mut =<span class="st"> </span><span class="kw">sum</span>(mutation_cites)
-    if (n_mut &gt;<span class="st"> </span><span class="dv">0</span>) {
-        mother_cell[mutation_cites] =<span class="st"> </span><span class="kw">as.integer</span>(<span class="kw">sample</span>(n_s, n_mut, <span class="dt">replace =</span> T)+<span class="dv">2</span>)
+    <span class="cf">if</span> (n_mut <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) {
+        mother_cell[mutation_cites] =<span class="st"> </span><span class="kw">as.integer</span>(<span class="kw">sample</span>(n_s, n_mut, <span class="dt">replace =</span> T)<span class="op">+</span><span class="dv">2</span>)
     }
     
     ## codes for dropout
-    dropout_cites =<span class="st"> </span><span class="kw">runif</span>(m) &lt;<span class="st"> </span>p_d
-    if (<span class="kw">sum</span>(dropout_cites) &gt;<span class="st"> </span><span class="dv">2</span> ) {
+    dropout_cites =<span class="st"> </span><span class="kw">runif</span>(m) <span class="op">&lt;</span><span class="st"> </span>p_d
+    <span class="cf">if</span> (<span class="kw">sum</span>(dropout_cites) <span class="op">&gt;</span><span class="st"> </span><span class="dv">2</span> ) {
         dropout_between =<span class="st"> </span><span class="kw">sample</span>(<span class="kw">which</span>(dropout_cites), <span class="dv">2</span> )
-        mother_cell[dropout_between[<span class="dv">1</span>]:dropout_between[<span class="dv">2</span>]] =<span class="st"> </span><span class="kw">as.integer</span>(<span class="dv">2</span>)
+        mother_cell[dropout_between[<span class="dv">1</span>]<span class="op">:</span>dropout_between[<span class="dv">2</span>]] =<span class="st"> </span><span class="kw">as.integer</span>(<span class="dv">2</span>)
     }
     
     sim_tree[[k]] =<span class="st"> </span>mother_cell
-    k =<span class="st"> </span>k<span class="dv">+1</span>
+    k =<span class="st"> </span>k<span class="op">+</span><span class="dv">1</span>
 }</code></pre></div>
 <p>Simulated cells are shown below:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="dv">1</span>:<span class="dv">7</span> %&gt;%<span class="st"> </span><span class="kw">map</span>(~<span class="kw">paste</span>(nmstrings[sim_tree[[.]]], <span class="dt">collapse=</span><span class="st">&quot;&quot;</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="dv">1</span><span class="op">:</span><span class="dv">7</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">paste</span>(nmstrings[sim_tree[[.]]], <span class="dt">collapse=</span><span class="st">&quot;&quot;</span>))</code></pre></div>
 <pre><code>## [[1]]
 ## [1] &quot;000000000000000000000000000000&quot;
 ## 
 ## [[2]]
-## [1] &quot;0000A000000000000000000AD00000&quot;
+## [1] &quot;0000000000000000000000000CB000&quot;
 ## 
 ## [[3]]
-## [1] &quot;00000000000000000000000E0000C0&quot;
+## [1] &quot;0000E000000000000000000C000C00&quot;
 ## 
 ## [[4]]
-## [1] &quot;0DA0A000000000000D0000DAD0000A&quot;
+## [1] &quot;00E000000A000000000E00000CB000&quot;
 ## 
 ## [[5]]
-## [1] &quot;000BA000000000000000000AD00000&quot;
+## [1] &quot;00D000AB00000000000000000CB000&quot;
 ## 
 ## [[6]]
-## [1] &quot;000B000D000000000000000E0000C0&quot;
+## [1] &quot;00C0EB0E000A0000A000000C0D0C00&quot;
 ## 
 ## [[7]]
-## [1] &quot;000------------00000000E000BC0&quot;</code></pre>
+## [1] &quot;A000E000B00000000000000C000CA0&quot;</code></pre>
 <p>By extending the code, we made our code <code>sim_seqdata</code> for simulating data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1</span>)
 mu_d1 =<span class="st"> </span><span class="kw">c</span>( <span class="dv">30</span>, <span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span>)
-mu_d1 =<span class="st"> </span>mu_d1/<span class="kw">sum</span>(mu_d1)
+mu_d1 =<span class="st"> </span>mu_d1<span class="op">/</span><span class="kw">sum</span>(mu_d1)
 simn =<span class="st"> </span><span class="dv">100</span> <span class="co"># number of cell samples</span>
 m =<span class="st"> </span><span class="dv">200</span>  ## number of targets
 mu_d =<span class="st"> </span><span class="fl">0.03</span> <span class="co"># mutation rate</span>
@@ -208,25 +216,25 @@ p_d =<span class="st"> </span><span class="fl">0.005</span> <span class="co"># d
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sD =<span class="st"> </span><span class="kw">sim_seqdata</span>(<span class="dt">sim_n =</span> simn, <span class="dt">m =</span> m, <span class="dt">mu_d =</span> mu_d, <span class="dt">d =</span> d, <span class="dt">n_s =</span> <span class="kw">length</span>(mu_d1), <span class="dt">outcome_prob =</span> mu_d1, <span class="dt">p_d =</span> p_d )</code></pre></div>
 <p>The result of sim_seqdata function, sD, is a list of two object, 'seqs' and 'tree'.</p>
 <p>'seqs' is a sequence data of 'phyDat' object,</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sD$seqs</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sD<span class="op">$</span>seqs</code></pre></div>
 <pre><code>## 100 sequences with 200 character and 200 different site patterns.
 ## The states are 0 - A B C D E F G H</code></pre>
 <p>and 'tree' is ground truth tree structure of 'phylo' object.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(sD$tree)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(sD<span class="op">$</span>tree)</code></pre></div>
 <pre><code>## [1] &quot;phylo&quot;</code></pre>
 </div>
 <div id="distance-estimation-using-hamming" class="section level2">
 <h2>Distance estimation using hamming</h2>
 <p>One easy way to construct a tree is to calculate distance among cells and construct a tree from the distance matrix. One of widely used method for the sequence distance is hamming distance.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">distH =<span class="st"> </span><span class="kw">dist.hamming</span>(sD$seqs)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">distH =<span class="st"> </span><span class="kw">dist.hamming</span>(sD<span class="op">$</span>seqs)</code></pre></div>
 <p>With Neighbor Joining or fastme by <a href="https://pubmed.ncbi.nlm.nih.gov/12487758/">Desper, R. and Gascuel, O. (2002)</a>, we can construct tree from the distance matrix.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TreeNJ =<span class="st"> </span><span class="kw">NJ</span>(distH)
 TreeFM =<span class="st"> </span><span class="kw">fastme.ols</span>(distH)</code></pre></div>
 <p>We calculate Robinson-Foulds distance, one of evaluation metric used in the competition, to evaluate performance.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
 <pre><code>## [1] 0.5670103</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
-<pre><code>## [1] 1</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<pre><code>## [1] 0.5773196</code></pre>
 </div>
 <div id="ideas" class="section level2">
 <h2>Ideas</h2>
@@ -259,36 +267,36 @@ TreeFM =<span class="st"> </span><span class="kw">fastme.ols</span>(distH)</code
 <div id="example-code-for-weighted-hamming-i" class="section level3">
 <h3>Example code for Weighted Hamming I</h3>
 <p>Here's how we specify weights.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">InfoW =<span class="st"> </span>-<span class="kw">log</span>(mu_d1)  ## entropy as their weights
-InfoW[<span class="dv">1</span>:<span class="dv">2</span>] =<span class="st"> </span><span class="dv">1</span>   ## weight for initial state is 1 , weight for '-' is set to 1. 
-InfoW[<span class="dv">3</span>:<span class="dv">7</span>] =<span class="st"> </span><span class="fl">4.5</span> ## Constant weight for outcome states
-dist_wh1 =<span class="st"> </span><span class="kw">WH</span>(sD$seqs, InfoW)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">InfoW =<span class="st"> </span><span class="op">-</span><span class="kw">log</span>(mu_d1)  ## entropy as their weights
+InfoW[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>] =<span class="st"> </span><span class="dv">1</span>   ## weight for initial state is 1 , weight for '-' is set to 1. 
+InfoW[<span class="dv">3</span><span class="op">:</span><span class="dv">7</span>] =<span class="st"> </span><span class="fl">4.5</span> ## Constant weight for outcome states
+dist_wh1 =<span class="st"> </span><span class="kw">WH</span>(sD<span class="op">$</span>seqs, InfoW)
 <span class="co">#dist_wh1 = dist_weighted_hamming(sD$seqs, InfoW, dropout = FALSE)</span></code></pre></div>
 <p>We can construct tree using NJ or fastme.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TreeNJ_wh1 =<span class="st"> </span><span class="kw">NJ</span>(dist_wh1)
 TreeFM_wh1 =<span class="st"> </span><span class="kw">fastme.ols</span>(dist_wh1)</code></pre></div>
 <p>RF performance is as below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ_wh1, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ_wh1, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
 <pre><code>## [1] 0.371134</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM_wh1, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
-<pre><code>## [1] 1</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM_wh1, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<pre><code>## [1] 0.3195876</code></pre>
 </div>
 <div id="example-code-for-weighted-hamming-ii" class="section level3">
 <h3>Example code for Weighted Hamming II</h3>
 <p>Here's how we specify weights.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">InfoW =<span class="st"> </span>-<span class="kw">log</span>(mu_d1)  ## entropy as their weights
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">InfoW =<span class="st"> </span><span class="op">-</span><span class="kw">log</span>(mu_d1)  ## entropy as their weights
 InfoW[<span class="dv">1</span>] =<span class="st"> </span><span class="dv">1</span>  <span class="co"># weight for initial state is 1</span>
 InfoW[<span class="dv">2</span>] =<span class="st"> </span><span class="dv">12</span>  <span class="co"># weight for interval dropout, '----', is set to 12. </span>
-InfoW[<span class="dv">3</span>:<span class="dv">7</span>] =<span class="st"> </span><span class="dv">3</span> <span class="co"># Constant weight for outcome states</span>
-dist_wh2 =<span class="st"> </span><span class="kw">WH</span>(sD$seqs, InfoW, <span class="dt">dropout=</span><span class="ot">TRUE</span>)</code></pre></div>
+InfoW[<span class="dv">3</span><span class="op">:</span><span class="dv">7</span>] =<span class="st"> </span><span class="dv">3</span> <span class="co"># Constant weight for outcome states</span>
+dist_wh2 =<span class="st"> </span><span class="kw">WH</span>(sD<span class="op">$</span>seqs, InfoW, <span class="dt">dropout=</span><span class="ot">TRUE</span>)</code></pre></div>
 <p>We can construct tree using NJ or fastme.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TreeNJ_wh2 =<span class="st"> </span><span class="kw">NJ</span>(dist_wh2)
 TreeFM_wh2 =<span class="st"> </span><span class="kw">fastme.ols</span>(dist_wh2)</code></pre></div>
 <p>RF performance is as below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ_wh2, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeNJ_wh2, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
 <pre><code>## [1] 0.3298969</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM_wh2, sD$tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
-<pre><code>## [1] 0.9896907</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>( <span class="kw">RF.dist</span>(TreeFM_wh2, sD<span class="op">$</span>tree, <span class="dt">normalize =</span> <span class="ot">TRUE</span>) )</code></pre></div>
+<pre><code>## [1] 0.3814433</code></pre>
 </div>
 </div>
 
